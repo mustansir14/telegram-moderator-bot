@@ -15,7 +15,7 @@ load_dotenv()
 analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-PORT = int(os.environ.get('PORT', 5000))
+PORT = int(os.environ.get("PORT", 13978))
 
 
 async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
