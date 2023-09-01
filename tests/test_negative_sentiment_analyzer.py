@@ -87,3 +87,48 @@ def test_hate_speech_6(analyzer):
 def test_hate_speech_7(analyzer):
     result = analyzer.is_negative("fuck this was a good trade")
     assert result == False
+
+
+def test_hate_speech_8(analyzer):
+    result = analyzer.is_negative("This is a bad group. We always lose")
+    assert result == True
+
+
+def test_hate_speech_9(analyzer):
+    result = analyzer.is_negative("This is a scam")
+    assert result == True
+
+
+def test_hate_speech_10(analyzer):
+    result = analyzer.is_negative("scam")
+    assert result == True
+
+
+def test_hate_speech_11(analyzer):
+    result = analyzer.is_negative("fraud alert")
+    assert result == True
+
+
+def test_hate_speech_12(analyzer):
+    result = analyzer.is_negative("This group lies")
+    assert result == True
+
+
+def test_hate_speech_13(analyzer):
+    result = analyzer.is_negative("Fred tricks people")
+    assert result == True
+
+
+def test_hate_speech_14(analyzer):
+    result = analyzer.is_negative("they trick people into giving them money")
+    assert result == True
+
+
+def test_hate_speech_15(analyzer):
+    result = analyzer.is_negative("Do not trust the group they lie")
+    assert result == True
+
+
+def test_hate_speech_16(analyzer):
+    result = analyzer.is_negative("Fredtrading makes a lot of money on us")
+    assert result == False
