@@ -21,7 +21,7 @@ DISABLE_THREADS = [134482]
 # format {chat_id : [thread_ids]}
 if 'DYNO' in os.environ:
     THREADS_TO_SEND_MESSAGE = {
-
+        -1001622898322: [158009, 110538, 238474, None, 110657, 906169]
     }
 else:
     THREADS_TO_SEND_MESSAGE = {
@@ -64,8 +64,9 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
 
 
 async def send_reminder_message(context: ContextTypes.DEFAULT_TYPE):
+    text = "📢 Reminder:\n\nThis chat is only for trade-talk. For off-topic discussions, please head to the off-topic chat. Let's stay on point! 🎯 Thanks! ✌️"
     await context.bot.send_message(
-        chat_id=context.job.data["chat_id"], message_thread_id=context.job.data["thread_id"], text="hello suckers")
+        chat_id=context.job.data["chat_id"], message_thread_id=context.job.data["thread_id"], text=text)
 
 
 def main():
