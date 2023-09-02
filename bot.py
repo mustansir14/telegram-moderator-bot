@@ -16,7 +16,7 @@ analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = int(os.environ.get("PORT", 13978))
-DISABLE_CHATS = [-1001622898322]
+DISABLE_THREADS = [-1001622898322]
 
 chat_admins = {}
 
@@ -29,8 +29,11 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
     message_text = message.text
     chat_id = message.chat_id
     user_id = message.from_user.id
+    thread_id = message.message_thread_id
 
-    if chat_id in DISABLE_CHATS:
+    logging.info(f"Message {message_text} in thread {thread_id}")
+
+    if chat_id in DISABLE_THREADS:
         return
 
     if chat_id not in chat_admins:
