@@ -18,6 +18,8 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = int(os.environ.get("PORT", 13978))
 DISABLE_CHATS = [-1001622898322]
 
+chat_admins = {}
+
 
 async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -26,8 +28,19 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
         message = update.edited_message
     message_text = message.text
     chat_id = message.chat_id
+    user_id = message.from_user.id
 
     if chat_id in DISABLE_CHATS:
+        return
+
+    if chat_id not in chat_admins:
+        try:
+            admins = await context.bot.get_chat_administrators(chat_id)
+            chat_admins[chat_id] = [admin.user.id for admin in admins]
+        except:
+            chat_admins[chat_id] = []
+
+    if user_id in chat_admins[chat_id]:
         return
 
     if analyzer.is_negative(message_text):
@@ -42,10 +55,10 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~
                                    filters.COMMAND, delete_negative_messages))
 
-    # app.run_polling()
+    app.run_polling()
 
-    app.run_webhook(
-        "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://telegram-moderator-bot-ace7cd090436.herokuapp.com/" + TELEGRAM_BOT_TOKEN)
+    # app.run_webhook(
+    #     "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://telegram-moderator-bot-ace7cd090436.herokuapp.com/" + TELEGRAM_BOT_TOKEN)
 
 
 if __name__ == '__main__':
