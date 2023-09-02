@@ -16,7 +16,7 @@ analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = int(os.environ.get("PORT", 13978))
-DISABLE_THREADS = [134482]
+DISABLE_THREADS = [134482, 906169]
 
 
 def is_heroku() -> bool:
@@ -26,7 +26,7 @@ def is_heroku() -> bool:
 # format {chat_id : [thread_ids]}
 if is_heroku():
     THREADS_TO_SEND_MESSAGE = {
-        -1001622898322: [158009, 110538, 238474, None, 110657, 906169]
+        -1001622898322: [158009, 110538, 238474, None, 110657]
     }
 else:
     THREADS_TO_SEND_MESSAGE = {
@@ -83,7 +83,7 @@ def main():
 
     j = app.job_queue
     for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
-        seconds = 21600
+        seconds = 16200
         for thread_id in thread_ids:
             if is_heroku():
                 interval = 21600
