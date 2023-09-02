@@ -55,10 +55,10 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~
                                    filters.COMMAND, delete_negative_messages))
 
-    app.run_polling()
+    # app.run_polling()
 
-    # app.run_webhook(
-    #     "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://telegram-moderator-bot-ace7cd090436.herokuapp.com/" + TELEGRAM_BOT_TOKEN)
+    app.run_webhook(
+        "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://telegram-moderator-bot-ace7cd090436.herokuapp.com/" + TELEGRAM_BOT_TOKEN)
 
 
 if __name__ == '__main__':
