@@ -26,6 +26,8 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
     message_text = message.text
     chat_id = message.chat_id
 
+    logging.info(f"Recieved message {message_text} on chat: " + str(chat_id))
+
     if analyzer.is_negative(message_text):
         logging.info(f"Deleting negative message \"{message_text}\"")
         await context.bot.delete_message(chat_id, message.message_id)
