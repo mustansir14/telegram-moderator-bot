@@ -1,6 +1,7 @@
 from negative_sentiment_analyzer import NegativeSentimentAnalyzer
 from telegram import Update
 from telegram.ext import MessageHandler, filters, ApplicationBuilder, ContextTypes, CallbackContext
+from telethon import TelegramClient
 
 from dotenv import load_dotenv
 import os
@@ -18,8 +19,13 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = int(os.environ.get("PORT", 13978))
 DISABLE_THREADS = [134482]
 
+
+def is_heroku() -> bool:
+    return 'DYNO' in os.environ
+
+
 # format {chat_id : [thread_ids]}
-if 'DYNO' in os.environ:
+if is_heroku():
     THREADS_TO_SEND_MESSAGE = {
         -1001622898322: [158009, 110538, 238474, None, 110657, 906169]
     }
@@ -78,13 +84,17 @@ def main():
 
     j = app.job_queue
     for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
-        seconds = 1
+        seconds = 21600
         for thread_id in thread_ids:
-            j.run_repeating(send_reminder_message, 7200, seconds, data={
+            if is_heroku():
+                interval = 21600
+            else:
+                interval = 30
+            j.run_repeating(send_reminder_message, interval, seconds, data={
                             "chat_id": chat_id, "thread_id": thread_id})
             seconds += 600
 
-    if 'DYNO' in os.environ:
+    if is_heroku():
         logging.info("Running webhook")
         app.run_webhook(
             "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://telegram-moderator-bot-ace7cd090436.herokuapp.com/" + TELEGRAM_BOT_TOKEN)
