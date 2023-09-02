@@ -1,7 +1,6 @@
 from negative_sentiment_analyzer import NegativeSentimentAnalyzer
 from telegram import Update
-from telegram.ext import MessageHandler, filters, ApplicationBuilder, ContextTypes, CallbackContext
-from telethon import TelegramClient
+from telegram.ext import MessageHandler, filters, ApplicationBuilder, ContextTypes
 
 from dotenv import load_dotenv
 import os
