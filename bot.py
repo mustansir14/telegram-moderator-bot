@@ -83,10 +83,10 @@ def main():
 
     j = app.job_queue
     for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
-        seconds = 4380
+        seconds = 37800
         for thread_id in thread_ids:
             if is_heroku():
-                interval = 21600
+                interval = 86400
             else:
                 interval = 30
             j.run_repeating(send_reminder_message, interval, seconds, data={
