@@ -26,7 +26,7 @@ def is_heroku() -> bool:
 # format {chat_id : [thread_ids]}
 if is_heroku():
     THREADS_TO_SEND_MESSAGE = {
-        -1001622898322: [158009, 110538, 238474, None, 110657]
+        -1001622898322: [158009, 110538, 238474, None]
     }
 else:
     THREADS_TO_SEND_MESSAGE = {
@@ -83,7 +83,7 @@ def main():
 
     j = app.job_queue
     for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
-        seconds = 16200
+        seconds = 4380
         for thread_id in thread_ids:
             if is_heroku():
                 interval = 21600
