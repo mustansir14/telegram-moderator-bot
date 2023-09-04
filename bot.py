@@ -17,6 +17,7 @@ analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = int(os.environ.get("PORT", 13978))
 DISABLE_THREADS = [134482, 906169]
+BAN_STICKER_SETS = ["vsrpron"]
 
 
 def is_heroku() -> bool:
@@ -68,6 +69,14 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
         await context.bot.delete_message(chat_id, message.message_id)
 
 
+async def delete_negative_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    message = update.effective_message
+    sticker = message.sticker
+    if sticker and sticker.set_name in BAN_STICKER_SETS:
+        await context.bot.delete_message(
+            message.chat_id, message.message_id)
+
+
 async def send_reminder_message(context: ContextTypes.DEFAULT_TYPE):
     text = "📢 Reminder:\n\nThis chat is only for trade-talk. For off-topic discussions, please head to the off-topic chat. Let's stay on point! 🎯 Thanks! ✌️"
     await context.bot.send_message(
@@ -81,9 +90,12 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~
                                    filters.COMMAND, delete_negative_messages))
 
+    # app.add_handler(MessageHandler(
+    #     filters.ATTACHMENT, delete_negative_sticker))
+
     j = app.job_queue
     for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
-        seconds = 37800
+        seconds = 50400
         for thread_id in thread_ids:
             if is_heroku():
                 interval = 86400
