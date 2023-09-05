@@ -119,7 +119,7 @@ def main():
 
     j = app.job_queue
     for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
-        seconds = 50400
+        seconds = 57600
         for thread_id in thread_ids:
             if is_heroku():
                 interval = 86400
