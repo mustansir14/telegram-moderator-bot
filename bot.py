@@ -16,7 +16,7 @@ analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = int(os.environ.get("PORT", 13978))
-DISABLE_THREADS = [134482, 906169]
+DISABLE_THREADS = [1267563, 1175702]
 BAN_STICKER_SETS = [
     "Lustful",
     "IgnoranzaRegna",
