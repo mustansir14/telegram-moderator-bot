@@ -88,6 +88,11 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
     if user_id in chat_admins[chat_id]:
         return
 
+    if message_text.startswith("/"):
+        logging.info(f"Deleting command \"{message_text}\"")
+        await context.bot.delete_message(chat_id, message.message_id)
+        return
+
     if analyzer.is_negative(message_text):
         logging.info(f"Deleting negative message \"{message_text}\"")
         await context.bot.delete_message(chat_id, message.message_id)
@@ -111,8 +116,7 @@ def main():
 
     app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
 
-    app.add_handler(MessageHandler(filters.TEXT & ~
-                                   filters.COMMAND, delete_negative_messages))
+    app.add_handler(MessageHandler(filters.TEXT, delete_negative_messages))
 
     app.add_handler(MessageHandler(
         filters.ATTACHMENT, delete_negative_sticker))
