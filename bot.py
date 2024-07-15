@@ -75,9 +75,6 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
     logging.info(
         f"Message {message_text} with chat_id {chat_id} and thread_id {thread_id}")
 
-    if thread_id in DISABLE_THREADS:
-        return
-
     if chat_id not in chat_admins:
         try:
             admins = await context.bot.get_chat_administrators(chat_id)
@@ -91,6 +88,9 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
     if message_text.startswith("/"):
         logging.info(f"Deleting command \"{message_text}\"")
         await context.bot.delete_message(chat_id, message.message_id)
+        return
+
+    if thread_id in DISABLE_THREADS:
         return
 
     if analyzer.is_negative(message_text):
