@@ -134,7 +134,7 @@ def main():
     if ENVIRON == "prod":
         logging.info("Running webhook")
         app.run_webhook(
-            "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="http://165.232.74.108/" + TELEGRAM_BOT_TOKEN)
+            "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://165.232.74.108/" + TELEGRAM_BOT_TOKEN)
     else:
         logging.info("Running polling")
         app.run_polling()
