@@ -11,11 +11,13 @@ logging.basicConfig(format='%(asctime)s %(message)s',
 
 load_dotenv()
 
+ENVIRON = os.getenv("ENVIRON")
+
 
 analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-PORT = int(os.environ.get("PORT", 13978))
+PORT = 3000
 DISABLE_THREADS = [1267563, 1175702]
 BAN_STICKER_SETS = [
     "Lustful",
@@ -44,12 +46,8 @@ BAN_STICKER_SETS = [
 ]
 
 
-def is_heroku() -> bool:
-    return 'DYNO' in os.environ
-
-
 # format {chat_id : [thread_ids]}
-if is_heroku():
+if ENVIRON == "prod":
     THREADS_TO_SEND_MESSAGE = {
         -1001622898322: [158009, 110538, 238474, None]
     }
@@ -125,7 +123,7 @@ def main():
     for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
         seconds = 57600
         for thread_id in thread_ids:
-            if is_heroku():
+            if ENVIRON == "prod":
                 interval = 86400
             else:
                 interval = 30
@@ -133,10 +131,10 @@ def main():
                             "chat_id": chat_id, "thread_id": thread_id})
             seconds += 600
 
-    if is_heroku():
+    if ENVIRON == "prod":
         logging.info("Running webhook")
         app.run_webhook(
-            "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://telegram-moderator-bot-ace7cd090436.herokuapp.com/" + TELEGRAM_BOT_TOKEN)
+            "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="http://165.232.74.108/" + TELEGRAM_BOT_TOKEN)
     else:
         logging.info("Running polling")
         app.run_polling()

@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  bot:
+    container_name: bot
+    build:
+      context: .
+    init: true
+    ports:
+      - 3000:3000
+      - 80:80
+    volumes:
+      - ./:/app
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ENVIRON=${ENVIRON}
