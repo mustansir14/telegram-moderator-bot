@@ -41,7 +41,7 @@ def test_non_offensive_language_3(analyzer):
 
 def test_hate_speech_2(analyzer):
     result = analyzer.is_negative("You're stupid")
-    assert result == False
+    assert result == True
 
 
 def test_non_offensive_language_4(analyzer):
@@ -136,4 +136,12 @@ def test_hate_speech_16(analyzer):
 
 def test_hate_speech_17(analyzer):
     result = analyzer.is_negative("Shit man")
+    assert result == False
+
+def test_hate_speech_18(analyzer):
+    result = analyzer.is_negative("Both?")
+    assert result == False
+
+def test_hate_speech_18(analyzer):
+    result = analyzer.is_negative("Your Vegan Master - YVM")
     assert result == False
