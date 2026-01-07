@@ -28,6 +28,7 @@ if Env.ENVIRON == "prod":
     ALLOWED_USERS = [
         # Add allowed user IDs here, e.g.:
         1096814135,
+        1047563173,
     ]
     ALLOWED_CHANNELS = {
         -1001204626673: "fredtradingdaily",
