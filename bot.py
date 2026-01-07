@@ -46,7 +46,7 @@ BAN_STICKER_SETS = [
 # Single source of truth: determines which chats to moderate and where to send reminders
 if Env.ENVIRON == "prod":
     THREADS_TO_MODERATE = {
-        -1001622898322: [158009, 110538, 238474, None]
+        -1001622898322: [158009, 1165021, 238474, 1723216, 1]
     }
 else:
     THREADS_TO_MODERATE = {
