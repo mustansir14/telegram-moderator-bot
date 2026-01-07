@@ -1,4 +1,5 @@
 from src.negative_sentiment_analyzer import NegativeSentimentAnalyzer
+from src.env import Env
 from telegram import Update
 from telegram.ext import MessageHandler, filters, ApplicationBuilder, ContextTypes
 
@@ -11,14 +12,9 @@ logging.basicConfig(format='%(asctime)s %(message)s',
 
 load_dotenv()
 
-ENVIRON = os.getenv("ENVIRON")
-DEBUG = os.getenv("DEBUG", "False").lower() == "true"
-
 
 analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-PORT = 3000
 BAN_STICKER_SETS = [
     "Lustful",
     "IgnoranzaRegna",
@@ -48,7 +44,7 @@ BAN_STICKER_SETS = [
 
 # format {chat_id : [thread_ids]}
 # Single source of truth: determines which chats to moderate and where to send reminders
-if ENVIRON == "prod":
+if Env.ENVIRON == "prod":
     THREADS_TO_MODERATE = {
         -1001622898322: [158009, 110538, 238474, None]
     }
@@ -100,7 +96,7 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
             chat_admins[chat_id] = []
 
     # Skip admin moderation unless DEBUG is enabled
-    if not DEBUG and user_id in chat_admins[chat_id]:
+    if not Env.DEBUG and user_id in chat_admins[chat_id]:
         return
 
     if analyzer.is_negative(message_text):
@@ -133,7 +129,7 @@ async def send_reminder_message(context: ContextTypes.DEFAULT_TYPE):
 
 def main():
 
-    app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
+    app = ApplicationBuilder().token(Env.TELEGRAM_MODERATOR_BOT_TOKEN).build()
 
     app.add_handler(MessageHandler(filters.TEXT, delete_negative_messages))
 
@@ -149,17 +145,12 @@ def main():
                             "chat_id": chat_id, "thread_id": thread_id})
             seconds += get_value(10, 600)
 
-    # if ENVIRON == "prod":
-    #     logging.info("Running webhook")
-    #     app.run_webhook(
-    #         "0.0.0.0", PORT, TELEGRAM_BOT_TOKEN, webhook_url="https://165.232.74.108/" + TELEGRAM_BOT_TOKEN)
-    # else:
     logging.info("Running polling")
     app.run_polling()
 
 
 def get_value(dev_value, prod_value):
-    if ENVIRON == "prod":
+    if Env.ENVIRON == "prod":
         return prod_value
     else:
         return dev_value

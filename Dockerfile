@@ -12,8 +12,4 @@ RUN pip install -r requirements.txt
 # Copy your application code into the container
 COPY . /app
 
-# Expose the port that your application will run on
-EXPOSE 3000
 EXPOSE 80
-
-CMD [ "python", "bot.py" ]
