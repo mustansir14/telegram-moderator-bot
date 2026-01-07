@@ -12,13 +12,13 @@ logging.basicConfig(format='%(asctime)s %(message)s',
 load_dotenv()
 
 ENVIRON = os.getenv("ENVIRON")
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 
 analyzer = NegativeSentimentAnalyzer(os.getenv("OPENAI_API_KEY"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 PORT = 3000
-DISABLE_THREADS = [1267563, 1175702]
 BAN_STICKER_SETS = [
     "Lustful",
     "IgnoranzaRegna",
@@ -47,12 +47,13 @@ BAN_STICKER_SETS = [
 
 
 # format {chat_id : [thread_ids]}
+# Single source of truth: determines which chats to moderate and where to send reminders
 if ENVIRON == "prod":
-    THREADS_TO_SEND_MESSAGE = {
+    THREADS_TO_MODERATE = {
         -1001622898322: [158009, 110538, 238474, None]
     }
 else:
-    THREADS_TO_SEND_MESSAGE = {
+    THREADS_TO_MODERATE = {
         -1001843081678: [213]
     }
 
@@ -65,10 +66,28 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
     message = update.message
     if message is None:
         message = update.edited_message
+    if message is None:
+        return
+
     message_text = message.text
+    if message_text is None:
+        return
+
     chat_id = message.chat_id
+
+    if message_text.startswith("/"):
+        logging.info(f"Deleting command \"{message_text}\"")
+        await context.bot.delete_message(chat_id, message.message_id)
+        return
+
     user_id = message.from_user.id
     thread_id = message.message_thread_id
+
+    # Only moderate chats defined in THREADS_TO_MODERATE
+    if chat_id not in THREADS_TO_MODERATE:
+        return
+    if thread_id not in THREADS_TO_MODERATE[chat_id]:
+        return
 
     logging.info(
         f"Message {message_text} with chat_id {chat_id} and thread_id {thread_id}")
@@ -80,15 +99,8 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
         except:
             chat_admins[chat_id] = []
 
-    if user_id in chat_admins[chat_id]:
-        return
-
-    if message_text.startswith("/"):
-        logging.info(f"Deleting command \"{message_text}\"")
-        await context.bot.delete_message(chat_id, message.message_id)
-        return
-
-    if thread_id in DISABLE_THREADS:
+    # Skip admin moderation unless DEBUG is enabled
+    if not DEBUG and user_id in chat_admins[chat_id]:
         return
 
     if analyzer.is_negative(message_text):
@@ -98,6 +110,15 @@ async def delete_negative_messages(update: Update, context: ContextTypes.DEFAULT
 
 async def delete_negative_sticker(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message = update.effective_message
+    if message is None:
+        return
+
+    chat_id = message.chat_id
+
+    # Only moderate chats defined in THREADS_TO_MODERATE
+    if chat_id not in THREADS_TO_MODERATE:
+        return
+
     sticker = message.sticker
     if sticker and sticker.set_name in BAN_STICKER_SETS:
         await context.bot.delete_message(
@@ -120,16 +141,13 @@ def main():
         filters.ATTACHMENT, delete_negative_sticker))
 
     j = app.job_queue
-    for chat_id, thread_ids in THREADS_TO_SEND_MESSAGE.items():
-        seconds = 57600
+    for chat_id, thread_ids in THREADS_TO_MODERATE.items():
+        seconds = get_value(0, 57600)
         for thread_id in thread_ids:
-            if ENVIRON == "prod":
-                interval = 86400
-            else:
-                interval = 30
+            interval = get_value(30, 86400)
             j.run_repeating(send_reminder_message, interval, seconds, data={
                             "chat_id": chat_id, "thread_id": thread_id})
-            seconds += 600
+            seconds += get_value(10, 600)
 
     # if ENVIRON == "prod":
     #     logging.info("Running webhook")
@@ -138,6 +156,13 @@ def main():
     # else:
     logging.info("Running polling")
     app.run_polling()
+
+
+def get_value(dev_value, prod_value):
+    if ENVIRON == "prod":
+        return prod_value
+    else:
+        return dev_value
 
 
 if __name__ == '__main__':
