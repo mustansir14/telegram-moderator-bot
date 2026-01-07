@@ -1,4 +1,4 @@
-from negative_sentiment_analyzer import NegativeSentimentAnalyzer
+from src.negative_sentiment_analyzer import NegativeSentimentAnalyzer
 from telegram import Update
 from telegram.ext import MessageHandler, filters, ApplicationBuilder, ContextTypes
 

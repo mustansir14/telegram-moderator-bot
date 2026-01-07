@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request
-from negative_sentiment_analyzer import NegativeSentimentAnalyzer
+from src.negative_sentiment_analyzer import NegativeSentimentAnalyzer
 
 from dotenv import load_dotenv
 import os

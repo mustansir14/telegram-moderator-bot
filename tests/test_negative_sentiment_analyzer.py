@@ -1,4 +1,4 @@
-from negative_sentiment_analyzer import NegativeSentimentAnalyzer
+from src.negative_sentiment_analyzer import NegativeSentimentAnalyzer
 import pytest
 
 from dotenv import load_dotenv
