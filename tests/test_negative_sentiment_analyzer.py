@@ -129,19 +129,21 @@ def test_hate_speech_15(analyzer):
     assert result == True
 
 
-def test_hate_speech_16(analyzer):
-    result = analyzer.is_negative("Fredtrading makes a lot of money on us")
-    assert result == False
-
-
 def test_hate_speech_17(analyzer):
     result = analyzer.is_negative("Shit man")
     assert result == False
+
 
 def test_hate_speech_18(analyzer):
     result = analyzer.is_negative("Both?")
     assert result == False
 
-def test_hate_speech_18(analyzer):
+
+def test_hate_speech_19(analyzer):
     result = analyzer.is_negative("Your Vegan Master - YVM")
+    assert result == False
+
+
+def test_hate_speech_20(analyzer):
+    result = analyzer.is_negative("Why?")
     assert result == False

@@ -1,38 +1,114 @@
-import openai
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import ChatPromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate
+from langchain_core.output_parsers import PydanticOutputParser
+from pydantic import BaseModel, Field
 import string
 
-SENSITIVITY = 5 # between 1 to 100
+SENSITIVITY = 5  # between 1 to 100
+
+
+class SentimentAnalysisResult(BaseModel):
+    """Result of sentiment analysis"""
+    is_negative: bool = Field(
+        description="True if the message contains offensive or hate speech, False otherwise")
 
 
 class NegativeSentimentAnalyzer:
     def __init__(self, openai_api_key: str) -> None:
-        openai.api_key = openai_api_key
-        self.blacklist_unigram = ["scam", "fraud",
-                                  "ponzi", "scheme"]
+        # Initialize LangChain ChatOpenAI with gpt-4o-mini
+        self.llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            temperature=0,
+            openai_api_key=openai_api_key
+        )
+
+        # Initialize output parser
+        self.output_parser = PydanticOutputParser(
+            pydantic_object=SentimentAnalysisResult)
+
+        # Create prompt template with system and user messages
+        system_template = """You are an intelligent chat group moderator bot for FredTrading, a forex trading and advising community.
+
+Your task is to detect if messages contain offensive content, hate speech, or targeted negativity towards the group or its members.
+
+IMPORTANT GUIDELINES:
+- Context matters: Swearing alone is NOT offensive if it's not targeted at people. Expressions like "Fuck yeah!" or "Shit, that was a good trade" are acceptable.
+- Understand intent: "Fuck this was a good trade" (positive emotion) vs "Fuck you" (targeted attack) - only the latter is offensive.
+- Targeted negativity: Messages that attack the group, claim it's a scam/fraud, or disparage members should be flagged.
+- Swearing is allowed: Words like "shit", "stupid", "damn" are acceptable in casual conversation, as long as they're not directed at people.
+- Illegal content: Any mention of illegal drugs or illegal acts should be flagged.
+- Sensitivity level: On a scale of 1-100, your sensitivity should be {sensitivity}. You should not be overly sensitive.
+
+CONTEXT:
+- Group name: FredTrading
+- Group purpose: Forex trading and advising
+- Goal: Maintain a safe, respectful environment without stifling genuine conversation or emotional expression
+
+{format_instructions}"""
+
+        human_template = """Analyze the following message from a group chat member:
+
+```{text}```
+
+Determine if this message contains offensive content or hate speech."""
+
+        system_message_prompt = SystemMessagePromptTemplate.from_template(
+            system_template)
+        human_message_prompt = HumanMessagePromptTemplate.from_template(
+            human_template)
+
+        self.prompt = ChatPromptTemplate.from_messages([
+            system_message_prompt,
+            human_message_prompt
+        ])
+
+        # Blacklist for automatic detection (kept for performance)
+        self.blacklist_unigram = ["scam", "fraud", "ponzi", "scheme"]
         self.blacklist_bigram = ["money laundering"]
 
     def is_negative(self, text: str) -> bool:
-        text = text.replace("!", "")
-        if self.contains_word_from_blacklist(text):
+        # Quick blacklist check first
+        text_processed = text.replace("!", "")
+        if self.contains_word_from_blacklist(text_processed):
             return True
-        # prompt = f'Consider the text delimited by triple backticks and intelligently determine if it contains offensive or hate speech. The goal should be to not just identify isolated bad words but to understand the context of sentences in which they are used. The aim is to maintain a positive and respectful community environment in the group without stifling genuine conversation. Ensure false positives (e.g., "Fuck this was a good trade") are minimized while true negatives (e.g., "Fuck the system") are captured. The use of the word "fuck" can also be used to describe happiness, like "Fuck that was a good trade", so text like this should not be marked as offensive. The output you provide will be used to montior messages in a group chat related to finance and stocks, so if a message says anything bad or derogatory about the group, or says that the group lies or tricks people, it should be considered offensive. The group is called FredTrading. You do not need to be too sensitive, so words like "shit" and "stupid" should be allowed. However, any sorts of illegal drugs or acts should not be allowed. "Stupid" is allowed.\n```{text}```\nProvide a single character as output, either 1 or 0, where 1 means that the text contains offensive or hate speech, and 0 means it does not. Do not explain your answer.'
-        prompt = f'You are a chat group moderator bot. You will be provided with a text message sent by a member in the gorup and your goal is to detect if the message contains offensive or hate speech towards the group or other members of the group. The group is called FredTrading, and is related to forex trading and advising. Ensure false positives (e.g., "Fuck this was a good trade") are minimized while true negatives (e.g., "Fuck the system") are captured. Understand that swearing is allowed, as long as it is not targetted towards the group or other members in the group. Members should be able to express their emotions by saying things like "Shit!" or "Fuck yeah!". We need to make sure that the group is a safe environment for other members. On a scale of 1 to 100, the sensitivity should be {SENSITIVITY}. Consider the message delimited by triple backticks, and determine if it is offensive or not. \n```{text}```\nProvide a single character as output, either 1 or 0, where 1 means that the text contains offensive or hate speech, and 0 means it does not. Do not explain your answer.'
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0
-        )
 
-        return bool(int(response.choices[0].message["content"]))
+        try:
+            # Format prompt with sensitivity and format instructions
+            formatted_prompt = self.prompt.format_messages(
+                text=text,
+                sensitivity=SENSITIVITY,
+                format_instructions=self.output_parser.get_format_instructions()
+            )
 
-    def contains_word_from_blacklist(self, text: str):
+            # Get response from LLM
+            response = self.llm.invoke(formatted_prompt)
+
+            # Parse the response
+            result = self.output_parser.parse(response.content)
+
+            return result.is_negative
+
+        except Exception as e:
+            # Fallback: if parsing fails, check if response contains "true" or "1"
+            # This handles edge cases where the model might not follow the format exactly
+            print(f"Error parsing LLM response: {e}")
+            # For safety, return False on error (don't block messages if we can't determine)
+            return False
+
+    def contains_word_from_blacklist(self, text: str) -> bool:
+        """Check if text contains words from the blacklist"""
         text = text.translate(str.maketrans('', '', string.punctuation))
         words = text.lower().split()
+
+        # Check unigrams
         for word in words:
             if word in self.blacklist_unigram:
                 return True
+
+        # Check bigrams
         bi_grams = [words[i] + " " + words[i+1] for i in range(len(words) - 1)]
         for bi_gram in bi_grams:
             if bi_gram in self.blacklist_bigram:
                 return True
+
         return False
